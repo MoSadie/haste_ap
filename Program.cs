@@ -685,7 +685,26 @@ public partial class Program
     {
         if (FactSystem.GetFact(new Fact("APCaptainsRewards")) == 1f)
         {
-            return entry.levels[Math.Min((int)FactSystem.GetFact(new Fact(ConvertCaptainsInternalName(entry.fact))), entry.levels.Length-1)];
+            // Since SOME upgrades skip levels when buying from the Captain, we need to actually check what the next level is based on how many upgrade items we have
+            int level = 0;
+            int upgradeCount = (int)FactSystem.GetFact(new Fact(ConvertCaptainsInternalName(entry.fact)));
+
+            for (int i = 0; i < upgradeCount; i++)
+            {
+                int? nextLevel = entry.GetNextLevel(level); // This handles both directions out of bounds and skipping 0-cost levels (looking at you Max Lives)
+
+                if (nextLevel != null)
+                {
+                    // We have a next level to go to, save it and keep looping
+                    level = nextLevel.GetValueOrDefault();
+                } else
+                {
+                    // Next level does not exist, no need to loop anymore
+                    break;
+                }
+            }
+
+            return entry.levels[level];
         }
         else
         {
